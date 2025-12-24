@@ -1,18 +1,17 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+
 from core.database import get_db
-# from models.user import User
 from models.generated_models import UserRegistration
 
 from services.user_service import register_user, login_user
-
-#from schemas.user_schema import UserCreate, UserLogin
 
 from schemas.user_schema import (
     UserCreate,
     UserLogin,
     SendOTPRequest,
     VerifyOTPRequest,
+    UserResponse,     # ✅ Added import
 )
 
 from services.otp_service import (
@@ -20,12 +19,10 @@ from services.otp_service import (
     verify_otp_service,
 )
 
-
-
-
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post("/register")
+
+@router.post("/register", response_model=UserResponse)
 def register(data: UserCreate, db: Session = Depends(get_db)):
     return register_user(db, data)
 
@@ -33,9 +30,6 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(data: UserLogin, db: Session = Depends(get_db)):
     return login_user(db, data)
-
-
-
 
 
 @router.post("/send-otp")
