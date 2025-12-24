@@ -1,18 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from core.database import get_db
+<<<<<<< HEAD
+=======
+from models.generated_models import UserRegistration
+>>>>>>> main
 
 from models.generated_models import UserRegistration
 from services.user_service import register_user, login_user
 
+<<<<<<< HEAD
 from jose import jwt, JWTError
 from utils.jwt import create_access_token, SECRET_KEY, ALGORITHM
 
+=======
+>>>>>>> main
 from schemas.user_schema import (
     UserCreate,
     UserLogin,
     SendOTPRequest,
     VerifyOTPRequest,
+    UserResponse,     # ✅ Added import
 )
 
 from services.otp_service import (
@@ -23,10 +32,14 @@ from services.otp_service import (
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
+<<<<<<< HEAD
 # =========================
 # REGISTER
 # =========================
 @router.post("/register")
+=======
+@router.post("/register", response_model=UserResponse)
+>>>>>>> main
 def register(data: UserCreate, db: Session = Depends(get_db)):
     return register_user(db, data)
 
@@ -39,6 +52,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     return login_user(db, data)
 
 
+<<<<<<< HEAD
 # =========================
 # REFRESH TOKEN  ✅ ADD HERE
 # =========================
@@ -67,6 +81,8 @@ def refresh_token(token: str):
 # =========================
 # SEND OTP
 # =========================
+=======
+>>>>>>> main
 @router.post("/send-otp")
 def send_otp(data: SendOTPRequest, db: Session = Depends(get_db)):
     return send_otp_service(db, data.email)
