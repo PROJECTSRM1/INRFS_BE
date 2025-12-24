@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+
 
 from models.generated_models import UserRegistration
 from schemas.user_schema import UserCreate
@@ -40,16 +41,57 @@ def register_user(db: Session, data: UserCreate):
     return {"message": "User registered successfully", "user_id": user.id}
 
 
+
+
+
+
 def login_user(db: Session, data):
-    user = db.query(UserRegistration).filter(
-        UserRegistration.email == data.email
-    ).first()
+    # ❌ Neither provided
+    if not data.email and not data.inv_reg_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or inv_reg_id is required",
+        )
 
+    # ❌ Both provided
+    if data.email and data.inv_reg_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide only one: email or inv_reg_id",
+        )
+
+    # ✅ Query by email OR inv_reg_id
+    if data.email:
+        user = (
+            db.query(UserRegistration)
+            .filter(UserRegistration.email == data.email)
+            .first()
+        )
+    else:
+        user = (
+            db.query(UserRegistration)
+            .filter(UserRegistration.inv_reg_id == data.inv_reg_id)
+            .first()
+        )
+
+    # ❌ User not found
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
 
-    # Compare hashed password
+    # ❌ Password mismatch (hashed)
     if not verify_password(data.password, user.password):
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
 
-    return {"message": "Login successful", "user_id": user.id}
+    # ✅ Success
+    return {
+        "message": "Login successful",
+        "user_id": user.id,
+        "inv_reg_id": user.inv_reg_id,
+    }
+
