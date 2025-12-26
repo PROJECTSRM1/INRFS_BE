@@ -11,7 +11,7 @@ class User(Base):
     mobile = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
 
-    # OTP fields
+   
     email_otp = Column(String, nullable=True)
     mobile_otp = Column(String, nullable=True)
 
