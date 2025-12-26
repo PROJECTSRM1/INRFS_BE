@@ -13,7 +13,7 @@ def send_email(to_email: str, subject: str, body: str):
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
 
-    # 🔴 Hard fail if config missing
+    # Hard fail if config missing
     if not smtp_user or not smtp_password:
         raise RuntimeError("SMTP credentials not configured properly")
 
