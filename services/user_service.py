@@ -9,9 +9,6 @@ from utils.otp_store import is_verified
 from utils.jwt import create_access_token, create_refresh_token
 
 
-# ------------------------------------------------------------------
-# Generate sequential inv_reg_id like I0001, I0002, I0003...
-# ------------------------------------------------------------------
 def generate_inv_reg_id(db: Session):
     last_user = (
         db.query(UserRegistration)
@@ -35,9 +32,6 @@ def generate_inv_reg_id(db: Session):
     return f"I{new_number:04d}"
 
 
-# ------------------------------------------------------------------
-# Register User
-# ------------------------------------------------------------------
 def register_user(db: Session, data: UserCreate):
 
     # Check email exists
@@ -83,13 +77,6 @@ def register_user(db: Session, data: UserCreate):
     }
 
 
-# =====================================================================
-# LOGIN WITH OTP VERIFICATION CHECK
-# =====================================================================
-
-# ---------------------------------------------------------------------
-# Login User
-# ---------------------------------------------------------------------
 def login_user(db: Session, data):
 
     # ❌ Neither provided
@@ -99,14 +86,14 @@ def login_user(db: Session, data):
             detail="Email or inv_reg_id is required",
         )
 
-    # ❌ Both provided
+    
     if data.email and data.inv_reg_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Provide only one: email or inv_reg_id",
         )
 
-    # ✅ Determine identifier & fetch user
+    
     if data.email:
         identifier = data.email
         user = (
@@ -122,30 +109,27 @@ def login_user(db: Session, data):
             .first()
         )
 
-    # ❌ User not found
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
 
-    # ❌ OTP NOT VERIFIED → BLOCK LOGIN
+    
     if not is_verified(identifier):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="OTP verification required before login",
         )
 
-    # ❌ Password mismatch
+   
     if not verify_password(data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
 
-    # ===============================
-    # ✅ GENERATE JWT TOKENS (HERE)
-    # ===============================
 
     access_token = create_access_token(
         {
@@ -161,13 +145,52 @@ def login_user(db: Session, data):
         }
     )
 
-    # ✅ FINAL RESPONSE
+    
     return {
         "message": "Login successful",
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+
+
+def get_all_users(db: Session):
+    return db.query(UserRegistration).all()
+
+
+def get_user_by_id(db: Session, user_id: int):
+    return (
+        db.query(UserRegistration)
+        .filter(UserRegistration.id == user_id)
+        .first()
+    )
+
+
+def update_user(db: Session, user_id: int, data):
+    user = get_user_by_id(db, user_id)
+
+    if not user:
+        return None
+
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def delete_user(db: Session, user_id: int):
+    user = get_user_by_id(db, user_id)
+
+    if not user:
+        return None
+
+    db.delete(user)
+    db.commit()
+    return True
+
 
 
 
