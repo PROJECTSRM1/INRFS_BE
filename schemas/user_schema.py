@@ -12,9 +12,9 @@ class UserCreate(BaseModel):
     email: EmailStr
     mobile: str = Field(..., min_length=10, max_length=10)
     password: str = Field(..., min_length=6)
-    # gender_id: int
-    # age: int
-    # dob: date
+    gender_id: int
+    age: int
+    dob: date
 
 
 # ------------------------------
