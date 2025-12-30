@@ -2,7 +2,7 @@ from typing import Optional
 import datetime
 import decimal
 
-from sqlalchemy import BigInteger, Boolean, Date, DateTime, ForeignKeyConstraint, Integer, Numeric, PrimaryKeyConstraint, String, UniqueConstraint, text
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Double, ForeignKeyConstraint, Index, Integer, Numeric, PrimaryKeyConstraint, String, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -53,6 +53,23 @@ class MasterRole(Base):
     user_registration: Mapped[list['UserRegistration']] = relationship('UserRegistration', back_populates='role')
 
 
+class Plans(Base):
+    __tablename__ = 'plans'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='plans_pkey'),
+        UniqueConstraint('name', name='plans_name_key'),
+        Index('ix_plans_id', 'id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    returns_percentage: Mapped[float] = mapped_column(Double(53), nullable=False)
+    duration_months: Mapped[int] = mapped_column(Integer, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String)
+    is_active: Mapped[Optional[bool]] = mapped_column(Boolean)
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime(True), server_default=text('now()'))
+
+
 class InvConfig(Base):
     __tablename__ = 'inv_config'
     __table_args__ = (
@@ -67,11 +84,13 @@ class InvConfig(Base):
     interest_amount: Mapped[decimal.Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     maturity_amount: Mapped[decimal.Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     uk_inv_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    maturity_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     created_by: Mapped[Optional[int]] = mapped_column(BigInteger)
     created_date: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('now()'))
     modified_by: Mapped[Optional[int]] = mapped_column(BigInteger)
     modified_date: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
+    upload_file: Mapped[Optional[str]] = mapped_column(String(500))
 
     plan_type: Mapped['MasterPlanType'] = relationship('MasterPlanType', back_populates='inv_config')
 
@@ -103,6 +122,7 @@ class UserRegistration(Base):
     modified_by: Mapped[Optional[int]] = mapped_column(BigInteger)
     modified_date: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
+    is_verified: Mapped[Optional[bool]] = mapped_column(Boolean)
 
     gender: Mapped['MasterGender'] = relationship('MasterGender', back_populates='user_registration')
     role: Mapped['MasterRole'] = relationship('MasterRole', back_populates='user_registration')

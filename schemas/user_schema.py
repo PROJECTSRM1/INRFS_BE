@@ -21,6 +21,14 @@ class UserLogin(BaseModel):
     password: str
 
 
+class LoginResponse(BaseModel):
+    message: str
+    inv_reg_id: str = Field(alias="Customer-ID")
+    first_name: str = Field(alias="First_Name")
+    access_token: str
+    refresh_token: str
+    token_type: str
+
 
 class SendOTPRequest(BaseModel):
     email: str

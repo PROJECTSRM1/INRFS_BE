@@ -10,7 +10,9 @@ from schemas.user_schema import (
     VerifyOTPRequest,
     UserUpdate,
     UserDetailResponse,
+    LoginResponse,   # ✅ ADD THIS
 )
+
 
 from services.user_service import (
     register_user,
@@ -48,7 +50,7 @@ def verify_otp(data: VerifyOTPRequest, db: Session = Depends(get_db)):
 # =========================
 # LOGIN
 # =========================
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     return login_user(db, data)
 
