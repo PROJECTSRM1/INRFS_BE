@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from models.generated_models import UserRegistration
 from schemas.user_schema import UserCreate
 from utils.hash_password import hash_password, verify_password
-from utils.otp_store import is_verified
+# from utils.otp_store import is_verified
 from utils.jwt import create_access_token, create_refresh_token
 from services.otp_service import send_otp_service
 
@@ -109,11 +109,19 @@ def login_user(db: Session, data):
             detail="Invalid credentials",
         )
 
-    if not is_verified(identifier):
+    
+    if not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="OTP verification required before login",
         )
+
+
+    # if not is_verified(identifier):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="OTP verification required before login",
+    #     )
 
     if not verify_password(data.password, user.password):
         raise HTTPException(
@@ -127,13 +135,21 @@ def login_user(db: Session, data):
     refresh_token = create_refresh_token(
         {"sub": user.inv_reg_id, "role_id": user.role_id}
     )
-
     return {
-        "message": "Login successful",
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    "message": "Login successful",
+    "Customer-ID": user.inv_reg_id,
+    "First_Name": user.first_name,
+    "access_token": access_token,
+    "refresh_token": refresh_token,
+    "token_type": "bearer",
+}
+
+    # return {
+    #     "message": "Login successful",
+    #     "access_token": access_token,
+    #     "refresh_token": refresh_token,
+    #     "token_type": "bearer",
+    # }
 
 
 # -----------------------------

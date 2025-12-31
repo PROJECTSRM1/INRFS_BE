@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 
 from models.generated_models import UserRegistration
 from utils.email import send_email
-from utils.otp_store import generate_otp, verify_otp, mark_verified
+from utils.otp_store import generate_otp, verify_otp  #, mark_verified
 
 
 # -----------------------------
@@ -46,14 +46,36 @@ def verify_otp_service(db: Session, email: str, otp: str):
         raise HTTPException(status_code=404, detail="User not found")
 
     if not verify_otp(email, otp):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired OTP",
-        )
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    # ✅ Persist verification
+    user.is_verified = True
+    db.commit()
 
-    # ✅ Mark BOTH identifiers verified
-    mark_verified(user.email)
-    mark_verified(user.inv_reg_id)
+    # return {"message": "Email verified successfully"}
+
+
+
+# def verify_otp_service(db: Session, email: str, otp: str):
+#     user = db.query(UserRegistration).filter(
+#         UserRegistration.email == email
+#     ).first()
+
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+
+#     if not verify_otp(email, otp):
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Invalid or expired OTP",
+#         )
+
+#     # ✅ Mark BOTH identifiers verified
+#     mark_verified(user.email)
+#     mark_verified(user.inv_reg_id)
+
+
+
+
 
     # 📩 THANK YOU EMAIL
     send_email(
@@ -63,7 +85,7 @@ def verify_otp_service(db: Session, email: str, otp: str):
             f"Dear {user.first_name},\n\n"
             f"Thank you for registering with INRFS.\n\n"
             f"Your registration has been successfully completed.\n\n"
-            f"Investor Registration ID: {user.inv_reg_id}\n\n"
+            f"Customer-ID: {user.inv_reg_id}\n\n"
             f"You can now log in using your Email ID or "
             f"Investor Registration ID along with your password.\n\n"
             f"Regards,\nINRFS Team"
