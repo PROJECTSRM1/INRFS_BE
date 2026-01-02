@@ -14,6 +14,9 @@ class UserCreate(BaseModel):
     age: int
     dob: date
 
+    role_id: int = Field(..., description="1 = User, 2 = Admin")
+
+
 
 class UserLogin(BaseModel):
     email: Optional[EmailStr] = None

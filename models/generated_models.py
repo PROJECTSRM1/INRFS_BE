@@ -47,8 +47,9 @@ class MasterPlanType(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plan_type: Mapped[str] = mapped_column(String(255), nullable=False)
     percentage: Mapped[str] = mapped_column(String(10), nullable=False)
-    returns_in_days: Mapped[str] = mapped_column(String(100), nullable=False)
+    duration: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
+    description: Mapped[Optional[str]] = mapped_column(String(255))
 
     inv_config: Mapped[list['InvConfig']] = relationship('InvConfig', back_populates='plan_type')
 
@@ -139,7 +140,8 @@ class UserRegistration(Base):
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
     is_verified: Mapped[Optional[bool]] = mapped_column(Boolean)
     bank_id: Mapped[Optional[int]] = mapped_column(Integer)
-    bank_account_no: Mapped[Optional[int]] = mapped_column(Integer)
+    # bank_account_no: Mapped[Optional[str]] = mapped_column(String(20))
+    bank_account_no: Mapped[Optional[str]] = mapped_column(String(20))
     ifsc_code: Mapped[Optional[str]] = mapped_column(String(100))
 
     bank: Mapped[Optional['MasterBank']] = relationship('MasterBank', back_populates='user_registration')
