@@ -6,10 +6,10 @@ import datetime
 
 # ---------------- CREATE ----------------
 class InvestmentCreate(BaseModel):
-    customer_id: int
+    # customer_id: int
     principal_amount: Decimal
     plan_type_id: int
-    uk_inv_id: str                 # bond id
+    # uk_inv_id: str                 # bond id
     maturity_date: datetime.date
 
     # ⚠️ if you REALLY need client input (not recommended)
@@ -30,6 +30,8 @@ class InvestmentResponse(BaseModel):
     customer_id: int
     investment_id: int
     status: str
+    uk_inv_id: str 
+     
 
     model_config = ConfigDict(from_attributes=True)
 

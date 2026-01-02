@@ -4,7 +4,6 @@ from fastapi import HTTPException, status
 from models.generated_models import UserRegistration
 from schemas.user_schema import UserCreate
 from utils.hash_password import hash_password, verify_password
-# from utils.otp_store import is_verified
 from utils.jwt import create_access_token, create_refresh_token
 from services.otp_service import send_otp_service
 
@@ -35,11 +34,21 @@ def generate_inv_reg_id(db: Session):
 # REGISTER USER (AUTO OTP)
 # -----------------------------
 def register_user(db: Session, data: UserCreate):
+
+    # 🔒 Allow ONLY normal users here
+    if data.role_id != 1:
+        raise HTTPException(
+            status_code=403,
+            detail="Only normal users can register here"
+        )
+
+    # Email already exists
     if db.query(UserRegistration).filter(
         UserRegistration.email == data.email
     ).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    # Mobile already exists
     if db.query(UserRegistration).filter(
         UserRegistration.mobile == data.mobile
     ).first():
@@ -58,7 +67,7 @@ def register_user(db: Session, data: UserCreate):
         age=data.age,
         dob=data.dob,
         inv_reg_id=new_inv_reg_id,
-        role_id=1,
+        role_id=data.role_id,   # ✅ comes from request
         created_by=1,
     )
 
@@ -66,7 +75,7 @@ def register_user(db: Session, data: UserCreate):
     db.commit()
     db.refresh(user)
 
-    # ✅ AUTO SEND OTP
+    # ✅ Auto send OTP
     send_otp_service(db, user.email)
 
     return {
@@ -80,6 +89,7 @@ def register_user(db: Session, data: UserCreate):
 # LOGIN USER (OTP PROTECTED)
 # -----------------------------
 def login_user(db: Session, data):
+
     if not data.email and not data.inv_reg_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -93,12 +103,10 @@ def login_user(db: Session, data):
         )
 
     if data.email:
-        identifier = data.email
         user = db.query(UserRegistration).filter(
             UserRegistration.email == data.email
         ).first()
     else:
-        identifier = data.inv_reg_id
         user = db.query(UserRegistration).filter(
             UserRegistration.inv_reg_id == data.inv_reg_id
         ).first()
@@ -109,19 +117,11 @@ def login_user(db: Session, data):
             detail="Invalid credentials",
         )
 
-    
     if not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="OTP verification required before login",
         )
-
-
-    # if not is_verified(identifier):
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="OTP verification required before login",
-    #     )
 
     if not verify_password(data.password, user.password):
         raise HTTPException(
@@ -135,21 +135,15 @@ def login_user(db: Session, data):
     refresh_token = create_refresh_token(
         {"sub": user.inv_reg_id, "role_id": user.role_id}
     )
-    return {
-    "message": "Login successful",
-    "Customer-ID": user.inv_reg_id,
-    "First_Name": user.first_name,
-    "access_token": access_token,
-    "refresh_token": refresh_token,
-    "token_type": "bearer",
-}
 
-    # return {
-    #     "message": "Login successful",
-    #     "access_token": access_token,
-    #     "refresh_token": refresh_token,
-    #     "token_type": "bearer",
-    # }
+    return {
+        "message": "Login successful",
+        "Customer-ID": user.inv_reg_id,
+        "First_Name": user.first_name,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }
 
 
 # -----------------------------
@@ -160,11 +154,9 @@ def get_all_users(db: Session):
 
 
 def get_user_by_id(db: Session, user_id: int):
-    return (
-        db.query(UserRegistration)
-        .filter(UserRegistration.id == user_id)
-        .first()
-    )
+    return db.query(UserRegistration).filter(
+        UserRegistration.id == user_id
+    ).first()
 
 
 def update_user(db: Session, user_id: int, data):
@@ -188,220 +180,3 @@ def delete_user(db: Session, user_id: int):
     db.delete(user)
     db.commit()
     return True
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# from sqlalchemy.orm import Session
-# from fastapi import HTTPException, status
-
-# from models.generated_models import UserRegistration
-# from schemas.user_schema import UserCreate
-# from utils.hash_password import hash_password, verify_password
-# from utils.otp_store import is_verified
-
-# from utils.jwt import create_access_token, create_refresh_token
-
-
-# def generate_inv_reg_id(db: Session):
-#     last_user = (
-#         db.query(UserRegistration)
-#         .order_by(UserRegistration.id.desc())
-#         .first()
-#     )
-
-#     # If no users exist
-#     if not last_user or not last_user.inv_reg_id:
-#         return "I0001"
-
-#     last_id = last_user.inv_reg_id  # ex: I0005
-
-#     # Ensure ID format is correct
-#     if not last_id.startswith("I") or not last_id[1:].isdigit():
-#         return "I0001"
-
-#     number = int(last_id[1:])
-#     new_number = number + 1
-
-#     return f"I{new_number:04d}"
-
-
-# def register_user(db: Session, data: UserCreate):
-
-#     # Check email exists
-#     if db.query(UserRegistration).filter(UserRegistration.email == data.email).first():
-#         raise HTTPException(status_code=400, detail="Email already registered")
-
-#     # Check mobile exists
-#     if db.query(UserRegistration).filter(UserRegistration.mobile == data.mobile).first():
-#         raise HTTPException(status_code=400, detail="Mobile already registered")
-
-#     hashed_pwd = hash_password(data.password)
-
-
-#     # Generate sequential inv_reg_id
-#     new_inv_reg_id = generate_inv_reg_id(db)
-
-#     # Create user record
-#     user = UserRegistration(
-#         first_name=data.first_name,
-#         last_name=data.last_name,       
-#         email=data.email,
-#         mobile=data.mobile,
-#         password=hashed_pwd,
-#         gender_id=data.gender_id,
-#         age=data.age,
-#         dob=data.dob,
-#         # inv_reg_id=data.inv_reg_id,
-#         # role_id=data.role_id,
-#         inv_reg_id=new_inv_reg_id,
-#         role_id=1,                      
-#         created_by=1,
-#         # created_by=1
-#     )
-
-#     db.add(user)
-#     db.commit()
-#     db.refresh(user)
-
-#     return {
-#         "message": "User registered successfully",
-#         "user_id": user.id,
-#         "inv_reg_id": user.inv_reg_id,
-#     }
-
-
-# def login_user(db: Session, data):
-
-#     # ❌ Neither provided
-#     if not data.email and not data.inv_reg_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Email or inv_reg_id is required",
-#         )
-
-    
-#     if data.email and data.inv_reg_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Provide only one: email or inv_reg_id",
-#         )
-
-    
-#     if data.email:
-#         identifier = data.email
-#         user = (
-#             db.query(UserRegistration)
-#             .filter(UserRegistration.email == data.email)
-#             .first()
-#         )
-#     else:
-#         identifier = data.inv_reg_id
-#         user = (
-#             db.query(UserRegistration)
-#             .filter(UserRegistration.inv_reg_id == data.inv_reg_id)
-#             .first()
-#         )
-
-    
-#     if not user:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid credentials",
-#         )
-
-    
-#     if not is_verified(identifier):
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="OTP verification required before login",
-#         )
-
-   
-#     if not verify_password(data.password, user.password):
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid credentials",
-#         )
-
-
-#     access_token = create_access_token(
-#         {
-#             "sub": user.inv_reg_id,     # subject
-#             "role_id": user.role_id    # role for RBAC
-#         }
-#     )
-
-#     refresh_token = create_refresh_token(
-#         {
-#             "sub": user.inv_reg_id,
-#             "role_id": user.role_id
-#         }
-#     )
-
-    
-#     return {
-#         "message": "Login successful",
-#         "access_token": access_token,
-#         "refresh_token": refresh_token,
-#         "token_type": "bearer",
-#     }
-
-
-
-# def get_all_users(db: Session):
-#     return db.query(UserRegistration).all()
-
-
-# def get_user_by_id(db: Session, user_id: int):
-#     return (
-#         db.query(UserRegistration)
-#         .filter(UserRegistration.id == user_id)
-#         .first()
-#     )
-
-
-# def update_user(db: Session, user_id: int, data):
-#     user = get_user_by_id(db, user_id)
-
-#     if not user:
-#         return None
-
-#     for field, value in data.dict(exclude_unset=True).items():
-#         setattr(user, field, value)
-
-#     db.commit()
-#     db.refresh(user)
-#     return user
-
-
-# def delete_user(db: Session, user_id: int):
-#     user = get_user_by_id(db, user_id)
-
-#     if not user:
-#         return None
-
-#     db.delete(user)
-#     db.commit()
-#     return True
-
-
-
-

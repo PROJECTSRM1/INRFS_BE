@@ -1,14 +1,18 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from models.plan import Plan
+from models.generated_models import MasterPlanType
+
+
 from schemas.plan_schema import PlanCreate, PlanUpdate
 
 
 def create_plan(db: Session, data: PlanCreate):
-    if db.query(Plan).filter(Plan.name == data.name).first():
+    if db.query(MasterPlanType).filter(
+        MasterPlanType.plan_type == data.plan_type
+        ).first():
         raise HTTPException(status_code=400, detail="Plan already exists")
 
-    plan = Plan(**data.dict())
+    plan = MasterPlanType(**data.dict())
     db.add(plan)
     db.commit()
     db.refresh(plan)
@@ -16,11 +20,13 @@ def create_plan(db: Session, data: PlanCreate):
 
 
 def get_all_plans(db: Session):
-    return db.query(Plan).all()
+    return db.query(MasterPlanType).all()
 
 
 def get_plan_by_id(db: Session, plan_id: int):
-    plan = db.query(Plan).filter(Plan.id == plan_id).first()
+    plan = db.query(MasterPlanType).filter(
+        MasterPlanType.id == plan_id
+        ).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     return plan

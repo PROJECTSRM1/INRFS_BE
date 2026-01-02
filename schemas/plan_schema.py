@@ -2,26 +2,34 @@ from pydantic import BaseModel
 from typing import Optional
 
 
+# ======================
+# CREATE
+# ======================
 class PlanCreate(BaseModel):
-    name: str
-    returns_percentage: float
-    duration_months: int
-    description: Optional[str] = None
+    plan_type: str
+    percentage: str
+    returns_in_days: str
+    is_active: Optional[bool] = True
 
 
+# ======================
+# UPDATE
+# ======================
 class PlanUpdate(BaseModel):
-    returns_percentage: Optional[float]
-    duration_months: Optional[int]
-    description: Optional[str]
-    is_active: Optional[bool]
+    plan_type: Optional[str] = None
+    percentage: Optional[str] = None
+    returns_in_days: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
+# ======================
+# RESPONSE
+# ======================
 class PlanResponse(BaseModel):
     id: int
-    name: str
-    returns_percentage: float
-    duration_months: int
-    description: Optional[str]
+    plan_type: str
+    percentage: str
+    returns_in_days: str
     is_active: bool
 
     class Config:

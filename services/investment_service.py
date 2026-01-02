@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import update,text
+from sqlalchemy import text
 from fastapi import HTTPException
 from decimal import Decimal, InvalidOperation
 import datetime
@@ -34,6 +34,22 @@ def get_status(inv: InvConfig) -> str:
     return "active"
 
 
+def generate_uk_inv_id(db: Session) -> str:
+    last = db.query(InvConfig).order_by(InvConfig.id.desc()).first()
+
+    if not last or not last.uk_inv_id:
+        return "INV0001"
+
+    digits = "".join(filter(str.isdigit, last.uk_inv_id))
+
+    if not digits:
+        return "INV0001"
+
+    num = int(digits)
+    return f"INV{num + 1:04d}"
+
+
+
 # ---------------- CREATE ----------------
 
 def create_investment(db: Session, data):
@@ -49,15 +65,16 @@ def create_investment(db: Session, data):
     interest = calculate_interest(data.principal_amount, percentage)
     maturity_amount = data.principal_amount + interest
 
-    # -------- INSERT FIRST --------
+    uk_inv_id = generate_uk_inv_id(db)
+
     inv = InvConfig(
         principal_amount=data.principal_amount,
         plan_type_id=data.plan_type_id,
         interest_amount=interest,
         maturity_amount=maturity_amount,
         maturity_date=data.maturity_date,
-        uk_inv_id=data.uk_inv_id,
-        created_by=data.customer_id,
+        uk_inv_id=uk_inv_id,
+        created_by=data.created_by,
         is_active=True
     )
 
@@ -65,42 +82,33 @@ def create_investment(db: Session, data):
     db.commit()
     db.refresh(inv)
 
-    # -------- FORCE UPDATE USING RAW SQL (IMPORTANT) --------
     db.execute(
-    text("""
-    UPDATE inv_config
-    SET created_by = :created_by,
-        created_date = :created_date
-    WHERE id = :id
-    """),
-    {
-        # ✅ fallback logic HERE (not in schema)
-        "created_by": (
-            data.created_by
-            if data.created_by is not None
-            else data.customer_id
-        ),
-        "created_date": (
-            data.created_date
-            if data.created_date is not None
-            else datetime.datetime.utcnow()
-        ),
-        "id": inv.id
-    }
-)
+        text("""
+        UPDATE inv_config
+        SET created_by = :created_by,
+            created_date = :created_date
+        WHERE id = :id
+        """),
+        {
+            "created_by": data.created_by,
+            "created_date": datetime.datetime.utcnow(),
+            "id": inv.id
+        }
+    )
     db.commit()
 
-
     return {
-    "customer_id": (
-        data.created_by
-        if data.created_by is not None
-        else data.customer_id
-    ),
-    "investment_id": inv.id,
-    "status": get_status(inv)
-}
+        "customer_id": data.created_by,
+        "investment_id": inv.id,
+        "status": get_status(inv),
+        "uk_inv_id": inv.uk_inv_id
+    }
 
+
+# ---------------- READ ALL ----------------
+
+def get_all_investments(db: Session):
+    return db.query(InvConfig).all()
 
 
 # ---------------- READ ONE ----------------

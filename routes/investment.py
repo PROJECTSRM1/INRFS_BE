@@ -5,6 +5,7 @@ from core.database import get_db
 from schemas.investment_schema import InvestmentCreate, InvestmentUpdate
 from services.investment_service import (
     create_investment,
+    get_all_investments,
     get_investment,
     get_investments_by_customer,
     update_investment,
@@ -25,6 +26,12 @@ def create(
     db: Session = Depends(get_db)
 ):
     return create_investment(db, payload)
+
+
+# ---------------- GET ALL ----------------
+@router.get("/")
+def get_all(db: Session = Depends(get_db)):
+    return get_all_investments(db)
 
 
 # ---------------- READ ONE ----------------
