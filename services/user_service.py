@@ -130,10 +130,15 @@ def login_user(db: Session, data):
         )
 
     access_token = create_access_token(
-        {"sub": user.inv_reg_id, "role_id": user.role_id}
+        {"user_id": user.id,            # ✅ BIGINT (for DB relations)
+        "inv_reg_id": user.inv_reg_id, # ✅ Customer visible ID
+        "role_id": user.role_id
+        }
     )
     refresh_token = create_refresh_token(
-        {"sub": user.inv_reg_id, "role_id": user.role_id}
+        {"inv_reg_id": user.inv_reg_id,
+        "role_id": user.role_id
+        }
     )
 
     return {

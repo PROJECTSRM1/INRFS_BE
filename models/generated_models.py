@@ -9,6 +9,20 @@ class Base(DeclarativeBase):
     pass
 
 
+class MasterBank(Base):
+    __tablename__ = 'master_bank'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='pk_master_bank_id'),
+        UniqueConstraint('bank_name', name='uk_master_bank_bank_name')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bank_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
+
+    user_registration: Mapped[list['UserRegistration']] = relationship('UserRegistration', back_populates='bank')
+
+
 class MasterGender(Base):
     __tablename__ = 'master_gender'
     __table_args__ = (
@@ -33,8 +47,9 @@ class MasterPlanType(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plan_type: Mapped[str] = mapped_column(String(255), nullable=False)
     percentage: Mapped[str] = mapped_column(String(10), nullable=False)
-    returns_in_days: Mapped[str] = mapped_column(String(100), nullable=False)
+    duration: Mapped[str] = mapped_column(String(100), nullable=False)
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
+    description: Mapped[Optional[str]] = mapped_column(String(255))
 
     inv_config: Mapped[list['InvConfig']] = relationship('InvConfig', back_populates='plan_type')
 
@@ -98,6 +113,7 @@ class InvConfig(Base):
 class UserRegistration(Base):
     __tablename__ = 'user_registration'
     __table_args__ = (
+        ForeignKeyConstraint(['bank_id'], ['master_bank.id'], name='fk_user_registration_bank_id'),
         ForeignKeyConstraint(['gender_id'], ['master_gender.id'], name='fk_user_registration_gender_id'),
         ForeignKeyConstraint(['role_id'], ['master_role.id'], name='fk_user_registration_role_id'),
         PrimaryKeyConstraint('id', name='pk_user_registration_id'),
@@ -123,6 +139,10 @@ class UserRegistration(Base):
     modified_date: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
     is_verified: Mapped[Optional[bool]] = mapped_column(Boolean)
+    bank_id: Mapped[Optional[int]] = mapped_column(Integer)
+    bank_account_no: Mapped[Optional[str]] = mapped_column(String(20))
+    ifsc_code: Mapped[Optional[str]] = mapped_column(String(100))
 
+    bank: Mapped[Optional['MasterBank']] = relationship('MasterBank', back_populates='user_registration')
     gender: Mapped['MasterGender'] = relationship('MasterGender', back_populates='user_registration')
     role: Mapped['MasterRole'] = relationship('MasterRole', back_populates='user_registration')

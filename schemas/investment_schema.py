@@ -13,7 +13,7 @@ class InvestmentCreate(BaseModel):
     maturity_date: datetime.date
 
     # ⚠️ if you REALLY need client input (not recommended)
-    created_by: Optional[int] = None
+    # created_by: Optional[int] = None
     created_date: Optional[datetime.datetime] = None
 
 

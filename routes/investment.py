@@ -7,32 +7,32 @@ from services.investment_service import (
     create_investment,
     get_all_investments,
     get_investment,
-    get_investments_by_customer,
     update_investment,
     delete_investment,
     get_status
 )
+from utils.jwt import get_current_user   # ✅ FIXED
+from models.generated_models import UserRegistration
 
 router = APIRouter(
     prefix="/investments",
     tags=["Investments"]
 )
 
-
 # ---------------- CREATE ----------------
 @router.post("/")
 def create(
     payload: InvestmentCreate = Body(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserRegistration = Depends(get_current_user)
 ):
-    return create_investment(db, payload)
-
+    # ✅ USE user.id (BIGINT)
+    return create_investment(db, payload, current_user.id)
 
 # ---------------- GET ALL ----------------
 @router.get("/")
 def get_all(db: Session = Depends(get_db)):
     return get_all_investments(db)
-
 
 # ---------------- READ ONE ----------------
 @router.get("/{investment_id}")
@@ -41,31 +41,11 @@ def get_one(
     db: Session = Depends(get_db)
 ):
     inv = get_investment(db, investment_id)
-
     return {
-        "customer_id": inv.created_by,
+        "created_by": inv.created_by,
         "investment_id": inv.id,
         "status": get_status(inv)
     }
-
-
-# ---------------- READ BY CUSTOMER ----------------
-@router.get("/customer/{customer_id}")
-def get_by_customer(
-    customer_id: int,
-    db: Session = Depends(get_db)
-):
-    invs = get_investments_by_customer(db, customer_id)
-
-    return [
-        {
-            "customer_id": inv.created_by,
-            "investment_id": inv.id,
-            "status": get_status(inv)
-        }
-        for inv in invs
-    ]
-
 
 # ---------------- UPDATE ----------------
 @router.put("/{investment_id}")
@@ -75,13 +55,11 @@ def update(
     db: Session = Depends(get_db)
 ):
     inv = update_investment(db, investment_id, payload)
-
     return {
-        "customer_id": inv.created_by,
+        "created_by": inv.created_by,
         "investment_id": inv.id,
         "status": get_status(inv)
     }
-
 
 # ---------------- DELETE ----------------
 @router.delete("/{investment_id}")

@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from decimal import Decimal, InvalidOperation
 import datetime
 
-from models.generated_models import InvConfig, MasterPlanType
+from models.generated_models import InvConfig, MasterPlanType, UserRegistration
 
 
 # ---------------- HELPERS ----------------
@@ -52,7 +52,8 @@ def generate_uk_inv_id(db: Session) -> str:
 
 # ---------------- CREATE ----------------
 
-def create_investment(db: Session, data):
+def create_investment(db: Session, data, user_id: int):
+
     plan = db.query(MasterPlanType).filter(
         MasterPlanType.id == data.plan_type_id,
         MasterPlanType.is_active == True
@@ -74,7 +75,9 @@ def create_investment(db: Session, data):
         maturity_amount=maturity_amount,
         maturity_date=data.maturity_date,
         uk_inv_id=uk_inv_id,
-        created_by=data.created_by,
+
+        # ✅ CORRECT
+        created_by=user_id,
         is_active=True
     )
 
@@ -82,27 +85,13 @@ def create_investment(db: Session, data):
     db.commit()
     db.refresh(inv)
 
-    db.execute(
-        text("""
-        UPDATE inv_config
-        SET created_by = :created_by,
-            created_date = :created_date
-        WHERE id = :id
-        """),
-        {
-            "created_by": data.created_by,
-            "created_date": datetime.datetime.utcnow(),
-            "id": inv.id
-        }
-    )
-    db.commit()
-
     return {
-        "customer_id": data.created_by,
+        "customer_id": user_id,
         "investment_id": inv.id,
         "status": get_status(inv),
         "uk_inv_id": inv.uk_inv_id
     }
+
 
 
 # ---------------- READ ALL ----------------

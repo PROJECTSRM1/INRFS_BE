@@ -8,7 +8,7 @@ from typing import Optional
 class PlanCreate(BaseModel):
     plan_type: str
     percentage: str
-    returns_in_days: str
+    duration: str
     is_active: Optional[bool] = True
 
 
@@ -18,7 +18,7 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     plan_type: Optional[str] = None
     percentage: Optional[str] = None
-    returns_in_days: Optional[str] = None
+    duration: Optional[str] = None 
     is_active: Optional[bool] = None
 
 
@@ -29,7 +29,7 @@ class PlanResponse(BaseModel):
     id: int
     plan_type: str
     percentage: str
-    returns_in_days: str
+    duration: str
     is_active: bool
 
     class Config:
