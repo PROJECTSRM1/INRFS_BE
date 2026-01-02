@@ -28,6 +28,22 @@ from services.otp_service import verify_otp_service
 from jose import jwt, JWTError
 from utils.jwt import create_access_token, SECRET_KEY, ALGORITHM
 
+
+
+from schemas.bank_schema import (
+    BankDetailsCreate,
+    BankDetailsResponse,
+)
+from services.bank_service import (
+    add_or_update_bank_details,
+    get_bank_details,
+)
+
+from utils.auth import get_current_user
+from models.generated_models import UserRegistration
+
+
+
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
@@ -79,6 +95,41 @@ def refresh_token(token: str):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 
+
+
+
+
+# -----------------------------
+# ADD / UPDATE BANK DETAILS
+# -----------------------------
+@router.post("/bank-details")
+def add_bank_details(
+    data: BankDetailsCreate,
+    db: Session = Depends(get_db),
+    current_user: UserRegistration = Depends(get_current_user),
+):
+    return add_or_update_bank_details(
+        db=db,
+        user_id=current_user.id,
+        bank_id=data.bank_id,
+        bank_account_no=data.bank_account_no,
+        ifsc_code=data.ifsc_code,
+    )
+
+
+# -----------------------------
+# GET BANK DETAILS
+# -----------------------------
+@router.get("/bank-details", response_model=BankDetailsResponse)
+def fetch_bank_details(db: Session = Depends(get_db), current_user: UserRegistration = Depends(get_current_user)):
+    return get_bank_details(db, current_user.id)
+
+
+
+
+
+
+
 # =========================
 # CRUD OPERATIONS
 # =========================
@@ -113,9 +164,6 @@ def delete_user_api(user_id: int, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
-
-
-
 
 
 
