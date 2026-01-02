@@ -11,7 +11,8 @@ from services.investment_service import (
     delete_investment,
     get_status
 )
-from utils.jwt import get_current_user   # ✅ FIXED
+from utils.auth import get_current_user
+#from utils.jwt import get_current_user   # ✅ FIXED
 from models.generated_models import UserRegistration
 
 router = APIRouter(

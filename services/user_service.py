@@ -129,17 +129,33 @@ def login_user(db: Session, data):
             detail="Invalid credentials",
         )
 
-    access_token = create_access_token(
-        {"user_id": user.id,            # ✅ BIGINT (for DB relations)
-        "inv_reg_id": user.inv_reg_id, # ✅ Customer visible ID
-        "role_id": user.role_id
-        }
-    )
-    refresh_token = create_refresh_token(
-        {"inv_reg_id": user.inv_reg_id,
-        "role_id": user.role_id
-        }
-    )
+
+
+    access_token = create_access_token({
+    "sub": user.inv_reg_id,   # 🔑 PRIMARY IDENTITY
+    "user_id": user.id,       # optional (DB joins)
+    "role_id": user.role_id
+})
+
+    refresh_token = create_refresh_token({
+    "sub": user.inv_reg_id,
+    "user_id": user.id,
+    "role_id": user.role_id
+})
+
+
+
+    # access_token = create_access_token(
+    #     {"user_id": user.id,            # ✅ BIGINT (for DB relations)
+    #     "inv_reg_id": user.inv_reg_id, # ✅ Customer visible ID
+    #     "role_id": user.role_id
+    #     }
+    # )
+    # refresh_token = create_refresh_token(
+    #     {"inv_reg_id": user.inv_reg_id,
+    #     "role_id": user.role_id
+    #     }
+    # )
 
     return {
         "message": "Login successful",

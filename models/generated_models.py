@@ -140,6 +140,7 @@ class UserRegistration(Base):
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
     is_verified: Mapped[Optional[bool]] = mapped_column(Boolean)
     bank_id: Mapped[Optional[int]] = mapped_column(Integer)
+    # bank_account_no: Mapped[Optional[str]] = mapped_column(String(20))
     bank_account_no: Mapped[Optional[str]] = mapped_column(String(20))
     ifsc_code: Mapped[Optional[str]] = mapped_column(String(100))
 
