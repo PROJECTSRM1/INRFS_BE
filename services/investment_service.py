@@ -96,8 +96,23 @@ def create_investment(db: Session, data, user_id: int):
 
 # ---------------- READ ALL ----------------
 
-def get_all_investments(db: Session):
+# ---------------- READ ALL (BY LOGGED-IN USER) ----------------
+def get_all_investments(db: Session, user_id: int):
     return db.query(InvConfig).all()
+
+# ---------------- READ MY INVESTMENTS ----------------
+def get_my_investments(db: Session, user_id: int):
+    return (
+        db.query(InvConfig)
+        .filter(InvConfig.created_by == user_id)
+        .order_by(InvConfig.id.asc())
+        .all()
+    )
+
+        
+        
+    
+
 
 
 # ---------------- READ ONE ----------------
