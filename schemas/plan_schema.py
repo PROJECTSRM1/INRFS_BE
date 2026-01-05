@@ -31,6 +31,7 @@ class PlanResponse(BaseModel):
     percentage: str
     duration: str
     is_active: bool
+    description: str
 
     class Config:
         from_attributes = True
