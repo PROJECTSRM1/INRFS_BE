@@ -9,6 +9,7 @@ class PlanCreate(BaseModel):
     plan_type: str
     percentage: str
     duration: str
+    description: str   
     is_active: Optional[bool] = True
 
 
@@ -19,6 +20,7 @@ class PlanUpdate(BaseModel):
     plan_type: Optional[str] = None
     percentage: Optional[str] = None
     duration: Optional[str] = None 
+    description: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -31,6 +33,7 @@ class PlanResponse(BaseModel):
     percentage: str
     duration: str
     is_active: bool
+    description: str
 
     class Config:
         from_attributes = True
