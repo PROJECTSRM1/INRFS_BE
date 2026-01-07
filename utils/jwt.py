@@ -8,8 +8,10 @@ load_dotenv()  # ✅ REQUIRED
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
+
 ACCESS_EXPIRE_MIN = 15
 REFRESH_EXPIRE_DAYS = 7
+RESET_PASSWORD_EXPIRE_MIN = 15  # 🔑
 
 
 if not SECRET_KEY:
@@ -30,47 +32,35 @@ def create_refresh_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
+# 🔑 FORGOT PASSWORD TOKEN
+def create_reset_password_token(email: str):
+    payload = {
+        "sub": email,
+        "type": "password_reset",
+        "exp": datetime.utcnow() + timedelta(minutes=RESET_PASSWORD_EXPIRE_MIN),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-# # utils/auth.py
-# from fastapi import Depends, HTTPException
-# from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-# from jose import jwt, JWTError
-# from sqlalchemy.orm import Session
 
-# from core.database import get_db
-# from models.generated_models import UserRegistration
-# from utils.jwt import SECRET_KEY, ALGORITHM
 
-# security = HTTPBearer()
 
-# def get_current_user(
-#     credentials: HTTPAuthorizationCredentials = Depends(security),
-#     db: Session = Depends(get_db)
-# ):
-#     token = credentials.credentials
 
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         user_id = payload.get("user_id")
-#         token_type = payload.get("type")
 
-#         if token_type != "access":
-#             raise HTTPException(status_code=401, detail="Invalid token type")
 
-#         if not user_id:
-#             raise HTTPException(status_code=401, detail="Invalid token")
 
-#     except JWTError:
-#         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-#     user = db.query(UserRegistration).filter(
-#         UserRegistration.id == user_id
-#     ).first()
 
-#     if not user:
-#         raise HTTPException(status_code=401, detail="User not found")
 
-#     return user
+
+
+
+
+
+
+
+
+
+
 
 
 

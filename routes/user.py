@@ -43,6 +43,16 @@ from utils.auth import get_current_user
 from models.generated_models import UserRegistration
 
 
+from schemas.user_schema import (
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+)
+
+from services.password_service import (
+    forgot_password_service,
+    reset_password_service,
+)
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -69,6 +79,33 @@ def verify_otp(data: VerifyOTPRequest, db: Session = Depends(get_db)):
 @router.post("/login", response_model=LoginResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     return login_user(db, data)
+
+
+# -------------------------
+# FORGOT PASSWORD
+# -------------------------
+@router.post("/forgot-password")
+def forgot_password(
+    data: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    return forgot_password_service(db, data.email)
+
+
+# -------------------------
+# RESET PASSWORD
+# -------------------------
+@router.post("/reset-password")
+def reset_password(
+    data: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    return reset_password_service(
+        db,
+        token=data.token,
+        new_password=data.new_password,
+    )
+
 
 
 # =========================
@@ -120,12 +157,24 @@ def add_bank_details(
 # -----------------------------
 # GET BANK DETAILS
 # -----------------------------
+
 @router.get("/bank-details", response_model=BankDetailsResponse)
 def fetch_bank_details(db: Session = Depends(get_db), current_user: UserRegistration = Depends(get_current_user)):
     return get_bank_details(db, current_user.id)
 
 
+# @router.get("/bank-details", response_model=UserDetailResponse)
+# def fetch_bank_details(
+#     current_user: UserRegistration = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     user = current_user
 
+#     # 🔑 BYPASS VERIFICATION FOR ADMIN & SUPER ADMIN
+#     if user.role_id in (2, 3):
+#         user.is_verified = True
+
+#     return user
 
 
 
@@ -164,6 +213,26 @@ def delete_user_api(user_id: int, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
