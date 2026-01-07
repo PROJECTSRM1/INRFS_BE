@@ -12,6 +12,8 @@ class InvestmentCreate(BaseModel):
     # uk_inv_id: str                 # bond id
     maturity_date: datetime.date
 
+    upload_file: Optional[str] = None
+
     # ⚠️ if you REALLY need client input (not recommended)
     # created_by: Optional[int] = None
     created_date: Optional[datetime.datetime] = None
@@ -31,6 +33,8 @@ class InvestmentResponse(BaseModel):
     investment_id: int
     status: str
     uk_inv_id: str 
+
+    upload_file: Optional[str] = None
      
 
     model_config = ConfigDict(from_attributes=True)
