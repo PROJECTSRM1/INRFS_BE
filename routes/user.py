@@ -157,12 +157,24 @@ def add_bank_details(
 # -----------------------------
 # GET BANK DETAILS
 # -----------------------------
+
 @router.get("/bank-details", response_model=BankDetailsResponse)
 def fetch_bank_details(db: Session = Depends(get_db), current_user: UserRegistration = Depends(get_current_user)):
     return get_bank_details(db, current_user.id)
 
 
+# @router.get("/bank-details", response_model=UserDetailResponse)
+# def fetch_bank_details(
+#     current_user: UserRegistration = Depends(get_current_user),
+#     db: Session = Depends(get_db)
+# ):
+#     user = current_user
 
+#     # 🔑 BYPASS VERIFICATION FOR ADMIN & SUPER ADMIN
+#     if user.role_id in (2, 3):
+#         user.is_verified = True
+
+#     return user
 
 
 
