@@ -1,10 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+load_dotenv()
+
 
 from routes import user
 from core.database import Base, engine
 
+
 from models import plan as plan_model
+
 
 from routes import user
 from routes import plan
@@ -12,9 +17,13 @@ from routes import investment
 from routes import admin
 
 
+
+
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+
+app = FastAPI(title="Investment Service")
+
 
 # ---------------------------
 # CORS CONFIGURATION
@@ -27,6 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # ---------------------------
 # ROUTES
 # ---------------------------
@@ -36,13 +46,19 @@ app.include_router(investment.router)
 app.include_router(admin.router)
 
 
+
+
 # from fastapi import FastAPI
 # from routes import user
 # from core.database import Base, engine
 
+
 # # ❗ DO NOT CREATE TABLES when using read-only DB
 # # Base.metadata.create_all(bind=engine)
 
+
 # app = FastAPI()
 
+
 # app.include_router(user.router)
+

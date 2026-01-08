@@ -9,14 +9,12 @@ class BankDetailsCreate(BaseModel):
 
 
 
-# class BankDetailsCreate(BaseModel):
-#     bank_id: int = Field(..., example=1)
-#     bank_account_no: int = Field(..., example=123456789012)
-#     ifsc_code: str = Field(..., example="HDFC0001234")
-
-
 class BankDetailsResponse(BaseModel):
     bank_id: Optional[int]
     bank_account_no: Optional[int]
     ifsc_code: Optional[str]
-    is_verified: bool
+    is_verified: Optional[bool] = None
+    # is_verified: bool
+
+
+

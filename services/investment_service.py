@@ -6,6 +6,8 @@ import datetime
 
 from models.generated_models import InvConfig, MasterPlanType, UserRegistration
 
+# from models.generated_models import InvConfig, UserRegistration
+
 
 # ---------------- HELPERS ----------------
 
@@ -99,8 +101,53 @@ def create_investment(db: Session, data, user_id: int):
 # ---------------- READ ALL ----------------
 
 # ---------------- READ ALL (BY LOGGED-IN USER) ----------------
-def get_all_investments(db: Session, user_id: int):
-    return db.query(InvConfig).all()
+
+def get_all_investments(db: Session):
+    results = (
+        db.query(
+            InvConfig.id,
+            InvConfig.principal_amount,
+            InvConfig.plan_type_id,
+            InvConfig.maturity_amount,
+            InvConfig.maturity_date,
+            InvConfig.created_date,
+            InvConfig.modified_by,
+            InvConfig.is_active,
+            InvConfig.interest_amount,
+            InvConfig.uk_inv_id,
+            InvConfig.created_by,
+            InvConfig.modified_date,
+            InvConfig.upload_file,
+            UserRegistration.inv_reg_id
+        )
+        .join(
+            UserRegistration,
+            UserRegistration.id == InvConfig.created_by
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": r.id,
+            "principal_amount": r.principal_amount,
+            "plan_type_id": r.plan_type_id,
+            "maturity_amount": r.maturity_amount,
+            "maturity_date": r.maturity_date,
+            "created_date": r.created_date,
+            "modified_by": r.modified_by,
+            "is_active": r.is_active,
+            "interest_amount": r.interest_amount,
+            "uk_inv_id": r.uk_inv_id,
+            "created_by": r.created_by,
+            "modified_date": r.modified_date,
+            "upload_file": r.upload_file,
+            "inv_reg_id": r.inv_reg_id
+        }
+        for r in results
+    ]
+
+# InvConfig.created_date
 
 # ---------------- READ MY INVESTMENTS ----------------
 def get_my_investments(db: Session, user_id: int):

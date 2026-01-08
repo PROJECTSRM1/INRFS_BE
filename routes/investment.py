@@ -38,7 +38,7 @@ def get_all(
     db: Session = Depends(get_db),
     current_user: UserRegistration = Depends(get_current_user)
 ):
-    return get_all_investments(db, current_user.id)
+    return get_all_investments(db)
 
 
 # ---------------- GET MY INVESTMENTS ----------------
