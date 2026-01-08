@@ -76,6 +76,8 @@ def create_investment(db: Session, data, user_id: int):
         maturity_date=data.maturity_date,
         uk_inv_id=uk_inv_id,
 
+        upload_file=data.upload_file,
+
         # ✅ CORRECT
         created_by=user_id,
         is_active=True
