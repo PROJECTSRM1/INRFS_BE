@@ -5,6 +5,11 @@ from decimal import Decimal, InvalidOperation
 import datetime
 
 from models.generated_models import InvConfig, MasterPlanType, UserRegistration
+from services.email_templates import investment_created_email
+from utils.email import send_email
+from utils.storage import store_file
+
+
 
 # from models.generated_models import InvConfig, UserRegistration
 
@@ -69,6 +74,9 @@ def create_investment(db: Session, data, user_id: int):
     maturity_amount = data.principal_amount + interest
 
     uk_inv_id = generate_uk_inv_id(db)
+    
+    file_url = store_file(data.upload_file)
+
 
     inv = InvConfig(
         principal_amount=data.principal_amount,
@@ -77,24 +85,59 @@ def create_investment(db: Session, data, user_id: int):
         maturity_amount=maturity_amount,
         maturity_date=data.maturity_date,
         uk_inv_id=uk_inv_id,
-
-        upload_file=data.upload_file,
-
-        # ✅ CORRECT
+        upload_file=file_url,
         created_by=user_id,
         is_active=True
     )
 
+    # ✅ SAVE INVESTMENT
     db.add(inv)
     db.commit()
     db.refresh(inv)
 
+    # ✅ FETCH USER
+    user = db.query(UserRegistration).filter(
+        UserRegistration.id == user_id
+    ).first()
+
+    if user and user.email:
+        invest_datetime = inv.created_date or datetime.datetime.utcnow()
+        invest_date = invest_datetime.strftime("%d-%m-%Y")
+        invest_time = invest_datetime.strftime("%I:%M %p")
+
+        tenure_days = (inv.maturity_date - invest_datetime.date()).days
+
+        try:
+            subject, body = investment_created_email(
+                user_name=user.first_name,
+                uk_inv_id=inv.uk_inv_id,
+                invest_date=invest_date,
+                invest_time=invest_time,
+                tenure_days=tenure_days
+            )
+
+            send_email(
+                to_email=user.email,
+                subject=subject,
+                body=body
+            )
+
+            print(f"✅ Investment email sent to {user.email}")
+
+        except Exception as e:
+            print("❌ Investment email failed:", e)
+
+    else:
+        print("⚠️ User email not found, skipping email")
+
+    # ✅ RETURN MUST BE INSIDE FUNCTION
     return {
         "customer_id": user_id,
         "investment_id": inv.id,
         "status": get_status(inv),
         "uk_inv_id": inv.uk_inv_id
     }
+
 
 
 
