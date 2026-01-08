@@ -1,7 +1,8 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from decimal import Decimal
-import datetime
+import datetime  
+from fastapi import UploadFile
 
 
 # ---------------- CREATE ----------------
@@ -12,7 +13,7 @@ class InvestmentCreate(BaseModel):
     # uk_inv_id: str                 # bond id
     maturity_date: datetime.date
 
-    upload_file: Optional[str] = None
+    upload_file: UploadFile
 
     # ⚠️ if you REALLY need client input (not recommended)
     # created_by: Optional[int] = None

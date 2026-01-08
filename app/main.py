@@ -9,11 +9,12 @@ from models import plan as plan_model
 from routes import user
 from routes import plan
 from routes import investment
+from routes.payment_routes import router as payment_router
 
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(title="Investment Service")
 
 # ---------------------------
 # CORS CONFIGURATION
@@ -32,6 +33,7 @@ app.add_middleware(
 app.include_router(user.router)
 app.include_router(plan.router)
 app.include_router(investment.router)
+app.include_router(payment_router)
 
 
 # from fastapi import FastAPI

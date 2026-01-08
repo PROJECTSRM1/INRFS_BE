@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 from services.investment_service import get_my_investments
 
+from fastapi import UploadFile, File, Form
+from datetime import date
+from decimal import Decimal
+
 
 from core.database import get_db
 from schemas.investment_schema import InvestmentCreate, InvestmentUpdate
@@ -25,11 +29,20 @@ router = APIRouter(
 # ---------------- CREATE ----------------
 @router.post("/")
 def create(
-    payload: InvestmentCreate = Body(...),
+    principal_amount: Decimal = Form(...),
+    plan_type_id: int = Form(...),
+    maturity_date: date = Form(...),
+    upload_file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: UserRegistration = Depends(get_current_user)
 ):
-    # ✅ USE user.id (BIGINT)
+    payload = InvestmentCreate(
+        principal_amount=principal_amount,
+        plan_type_id=plan_type_id,
+        maturity_date=maturity_date,
+        upload_file=upload_file
+    )
+
     return create_investment(db, payload, current_user.id)
 
 # ---------------- GET ALL ----------------
