@@ -9,6 +9,7 @@ from models import plan as plan_model
 from routes import user
 from routes import plan
 from routes import investment
+from routes import admin
 
 
 Base.metadata.create_all(bind=engine)
@@ -32,6 +33,7 @@ app.add_middleware(
 app.include_router(user.router)
 app.include_router(plan.router)
 app.include_router(investment.router)
+app.include_router(admin.router)
 
 
 # from fastapi import FastAPI
