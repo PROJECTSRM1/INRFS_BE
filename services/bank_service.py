@@ -39,6 +39,26 @@ def add_or_update_bank_details(
         "ifsc_code": user.ifsc_code,
     }
 
+def get_all_bank_details(db: Session):
+    users = (
+        db.query(UserRegistration)
+        .filter(UserRegistration.bank_id.isnot(None))
+        .all()
+    )
+
+    return [
+        {
+            "user_id": u.id,
+            "email": u.email,
+            "inv_reg_id": u.inv_reg_id,
+            "bank_id": u.bank_id,
+            "bank_account_no": u.bank_account_no,
+            "ifsc_code": u.ifsc_code,
+            "is_verified": u.is_verified,
+        }
+        for u in users
+    ]
+
 
 def get_bank_details(db: Session, user_id: int):
     user = db.query(UserRegistration).filter(

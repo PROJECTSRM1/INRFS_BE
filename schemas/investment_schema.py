@@ -34,6 +34,7 @@ class InvestmentResponse(BaseModel):
     investment_id: int
     status: str
     uk_inv_id: str 
+    inv_reg_id: str # Added
 
     upload_file: Optional[str] = None
      
