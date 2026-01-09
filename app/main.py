@@ -22,13 +22,9 @@ from routes import admin
 
 Base.metadata.create_all(bind=engine)
 
-<<<<<<< HEAD
 
 app = FastAPI(title="Investment Service")
 
-=======
-app = FastAPI(title="Investment Service")
->>>>>>> main
 
 # ---------------------------
 # CORS CONFIGURATION
