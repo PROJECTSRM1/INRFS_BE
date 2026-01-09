@@ -9,14 +9,18 @@ from decimal import Decimal
 
 from core.database import get_db
 from schemas.investment_schema import InvestmentCreate, InvestmentUpdate
+
+
+
 from services.investment_service import (
     create_investment,
     get_all_investments,
-    get_investment,
-    update_investment,
-    delete_investment,
+    get_investment_by_uk_inv_id,
+    # update_investment_by_uk_inv_id,
+    delete_investment_by_uk_inv_id,
     get_status
 )
+
 from utils.auth import get_current_user
 #from utils.jwt import get_current_user   # ✅ FIXED
 from models.generated_models import UserRegistration
@@ -64,41 +68,45 @@ def get_my(
 
 
 # ---------------- READ ONE ----------------
-@router.get("/{investment_id}")
+@router.get("/{uk_inv_id}")
 def get_one(
-    investment_id: int,
+    uk_inv_id: str,
     db: Session = Depends(get_db),
 ):
-    inv = get_investment(db, investment_id)
+    inv = get_investment_by_uk_inv_id(db, uk_inv_id)
     return {
         "created_by": inv.created_by,
-        "investment_id": inv.id,
+        "investment_id": inv.id,      # internal PK (optional)
+        "uk_inv_id": inv.uk_inv_id,
         "status": get_status(inv)
     }
 
 
-# ---------------- UPDATE ----------------
-@router.put("/{investment_id}")
-def update(
-    investment_id: int,
-    payload: InvestmentUpdate = Body(...),
-    db: Session = Depends(get_db)
-):
+# # ---------------- UPDATE ----------------
+# @router.put("/{uk_inv_id}")
+# def update(
+#     uk_inv_id: str,
+#     payload: InvestmentUpdate = Body(...),
+#     db: Session = Depends(get_db),
+# ):
+#     inv = update_investment_by_uk_inv_id(db, uk_inv_id, payload)
+#     return {
+#         "created_by": inv.created_by,
+#         "investment_id": inv.id,      # internal PK
+#         "uk_inv_id": inv.uk_inv_id,
+#         "status": get_status(inv)
+#     }
 
-    inv = update_investment(db, investment_id, payload)
-    return {
-        "created_by": inv.created_by,
-        "investment_id": inv.id,
-        "status": get_status(inv)
-    }
+
+
 
 
 # ---------------- DELETE ----------------
-@router.delete("/{investment_id}")
+@router.delete("/{uk_inv_id}")
 def delete(
-    investment_id: int,
+    uk_inv_id: str,
     db: Session = Depends(get_db),
 ):
+    return delete_investment_by_uk_inv_id(db, uk_inv_id)
 
-    return delete_investment(db, investment_id)
 
