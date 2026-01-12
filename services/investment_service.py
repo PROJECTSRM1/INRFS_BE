@@ -74,9 +74,7 @@ def create_investment(db: Session, data, user_id: int):
     maturity_amount = data.principal_amount + interest
 
     uk_inv_id = generate_uk_inv_id(db)
-    
     file_url = store_file(data.upload_file)
-
 
     inv = InvConfig(
         principal_amount=data.principal_amount,
@@ -90,7 +88,6 @@ def create_investment(db: Session, data, user_id: int):
         is_active=True
     )
 
-    # ✅ SAVE INVESTMENT
     db.add(inv)
     db.commit()
     db.refresh(inv)
@@ -99,6 +96,9 @@ def create_investment(db: Session, data, user_id: int):
     user = db.query(UserRegistration).filter(
         UserRegistration.id == user_id
     ).first()
+
+    # ✅ DEFINE EMAIL
+    email = user.email
 
     if user and user.email:
         invest_datetime = inv.created_date or datetime.datetime.utcnow()
@@ -130,13 +130,16 @@ def create_investment(db: Session, data, user_id: int):
     else:
         print("⚠️ User email not found, skipping email")
 
-    # ✅ RETURN MUST BE INSIDE FUNCTION
+    # ✅ RETURN (MUST BE INDENTED)
     return {
+        "message": f"Investment created successfully. Confirmation email has been sent to {email}.",
         "customer_id": user_id,
         "investment_id": inv.id,
         "status": get_status(inv),
         "uk_inv_id": inv.uk_inv_id
     }
+
+
 
 
 
