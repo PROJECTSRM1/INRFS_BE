@@ -54,6 +54,33 @@ def is_verified(identifier: str) -> bool:
 
 
 
+# ========================
+# TEMP USER DATA STORE
+# ========================
+# email -> full user data (dict)
+
+_user_temp_store = {}
+
+
+def store_user_data(email: str, user_data: dict):
+    """
+    Temporarily store user registration data
+    until OTP verification
+    """
+    _user_temp_store[email] = user_data
+
+
+def pop_user_data(email: str):
+    """
+    Get and remove stored user data
+    after OTP verification
+    """
+    return _user_temp_store.pop(email, None)
+
+
+
+
+
 
 
 

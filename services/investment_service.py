@@ -130,6 +130,7 @@ def create_investment(db: Session, data, user_id: int):
 
     # ✅ RETURN MUST BE INSIDE FUNCTION
     return {
+       "message": f"Investment created successfully. Confirmation email has been sent to {user.email}.",
         "customer_id": user_id,
         "investment_id": inv.id,
         "status": get_status(inv),
