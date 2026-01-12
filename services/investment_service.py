@@ -11,6 +11,8 @@ from utils.storage import store_file
 
 
 
+# from models.generated_models import InvConfig, UserRegistration
+
 
 # ---------------- HELPERS ----------------
 
@@ -130,7 +132,6 @@ def create_investment(db: Session, data, user_id: int):
 
     # ✅ RETURN MUST BE INSIDE FUNCTION
     return {
-       "message": f"Investment created successfully. Confirmation email has been sent to {user.email}.",
         "customer_id": user_id,
         "investment_id": inv.id,
         "status": get_status(inv),
@@ -143,8 +144,53 @@ def create_investment(db: Session, data, user_id: int):
 # ---------------- READ ALL ----------------
 
 # ---------------- READ ALL (BY LOGGED-IN USER) ----------------
-def get_all_investments(db: Session, user_id: int):
-    return db.query(InvConfig).all()
+
+def get_all_investments(db: Session):
+    results = (
+        db.query(
+            InvConfig.id,
+            InvConfig.principal_amount,
+            InvConfig.plan_type_id,
+            InvConfig.maturity_amount,
+            InvConfig.maturity_date,
+            InvConfig.created_date,
+            InvConfig.modified_by,
+            InvConfig.is_active,
+            InvConfig.interest_amount,
+            InvConfig.uk_inv_id,
+            InvConfig.created_by,
+            InvConfig.modified_date,
+            InvConfig.upload_file,
+            UserRegistration.inv_reg_id
+        )
+        .join(
+            UserRegistration,
+            UserRegistration.id == InvConfig.created_by
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": r.id,
+            "principal_amount": r.principal_amount,
+            "plan_type_id": r.plan_type_id,
+            "maturity_amount": r.maturity_amount,
+            "maturity_date": r.maturity_date,
+            "created_date": r.created_date,
+            "modified_by": r.modified_by,
+            "is_active": r.is_active,
+            "interest_amount": r.interest_amount,
+            "uk_inv_id": r.uk_inv_id,
+            "created_by": r.created_by,
+            "modified_date": r.modified_date,
+            "upload_file": r.upload_file,
+            "inv_reg_id": r.inv_reg_id
+        }
+        for r in results
+    ]
+
+# InvConfig.created_date
 
 # ---------------- READ MY INVESTMENTS ----------------
 def get_my_investments(db: Session, user_id: int):
@@ -162,11 +208,12 @@ def get_my_investments(db: Session, user_id: int):
 
 
 # ---------------- READ ONE ----------------
-
-def get_investment(db: Session, investment_id: int):
-    inv = db.query(InvConfig).filter(
-        InvConfig.id == investment_id
-    ).first()
+def get_investment_by_uk_inv_id(db: Session, uk_inv_id: str):
+    inv = (
+        db.query(InvConfig)
+        .filter(InvConfig.uk_inv_id == uk_inv_id)
+        .first()
+    )
 
     if not inv:
         raise HTTPException(status_code=404, detail="Investment not found")
@@ -174,43 +221,42 @@ def get_investment(db: Session, investment_id: int):
     return inv
 
 
-# ---------------- READ BY CUSTOMER ----------------
 
-def get_investments_by_customer(db: Session, customer_id: int):
-    return db.query(InvConfig).filter(
-        InvConfig.created_by == customer_id
-    ).all()
+# # ---------------- READ BY CUSTOMER ----------------
+
+# def get_investments_by_customer(db: Session, customer_id: int):
+#     return db.query(InvConfig).filter(
+#         InvConfig.created_by == customer_id
+#     ).all()
 
 
-# ---------------- UPDATE ----------------
+# # ---------------- UPDATE ----------------
+# def update_investment_by_uk_inv_id(db: Session, uk_inv_id: str, data):
+#     inv = get_investment_by_uk_inv_id(db, uk_inv_id)
 
-def update_investment(db: Session, investment_id: int, data):
-    inv = get_investment(db, investment_id)
+#     if data.principal_amount is not None:
+#         inv.principal_amount = data.principal_amount
 
-    if data.principal_amount is not None:
-        inv.principal_amount = data.principal_amount
+#     if data.plan_type_id is not None:
+#         inv.plan_type_id = data.plan_type_id
 
-    if data.plan_type_id is not None:
-        inv.plan_type_id = data.plan_type_id
+#     if data.maturity_date is not None:
+#         inv.maturity_date = data.maturity_date
 
-    if data.maturity_date is not None:
-        inv.maturity_date = data.maturity_date
+#     if data.is_active is not None:
+#         inv.is_active = data.is_active
 
-    if data.is_active is not None:
-        inv.is_active = data.is_active
+#     inv.modified_date = datetime.datetime.utcnow()
 
-    inv.modified_date = datetime.datetime.utcnow()
+#     db.commit()
+#     db.refresh(inv)
 
-    db.commit()
-    db.refresh(inv)
-
-    return inv
+#     return inv
 
 
 # ---------------- DELETE (SOFT DELETE) ----------------
-
-def delete_investment(db: Session, investment_id: int):
-    inv = get_investment(db, investment_id)
+def delete_investment_by_uk_inv_id(db: Session, uk_inv_id: str):
+    inv = get_investment_by_uk_inv_id(db, uk_inv_id)
 
     inv.is_active = False
     inv.modified_date = datetime.datetime.utcnow()
@@ -218,3 +264,4 @@ def delete_investment(db: Session, investment_id: int):
     db.commit()
 
     return {"message": "Investment deactivated successfully"}
+

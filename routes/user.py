@@ -37,9 +37,13 @@ from schemas.bank_schema import (
 from services.bank_service import (
     add_or_update_bank_details,
     get_bank_details,
+    get_all_bank_details,
+
 )
 
+
 from utils.auth import get_current_user
+
 from models.generated_models import UserRegistration
 
 
@@ -52,6 +56,7 @@ from services.password_service import (
     forgot_password_service,
     reset_password_service,
 )
+
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -158,23 +163,35 @@ def add_bank_details(
 # GET BANK DETAILS
 # -----------------------------
 
-@router.get("/bank-details", response_model=BankDetailsResponse)
-def fetch_bank_details(db: Session = Depends(get_db), current_user: UserRegistration = Depends(get_current_user)):
+@router.get("/bank-details")
+def fetch_bank_details(
+    db: Session = Depends(get_db),
+    current_user: UserRegistration = Depends(get_current_user),
+):
+    # Admin / SuperAdmin
+    if current_user.role_id in (2, 3):
+        return get_all_bank_details(db)
+
+    # Investor
     return get_bank_details(db, current_user.id)
 
 
-# @router.get("/bank-details", response_model=UserDetailResponse)
+
+
+# @router.get("/bank-details", response_model=BankDetailsResponse)
+# def fetch_bank_details(db: Session = Depends(get_db), current_user: UserRegistration = Depends(get_current_user)):
+#     return get_bank_details(db, current_user.id)
+
+# from utils.auth import admin_or_superadmin
+
+
+# @router.get("/bank-details")
 # def fetch_bank_details(
-#     current_user: UserRegistration = Depends(get_current_user),
-#     db: Session = Depends(get_db)
+#     db: Session = Depends(get_db),
+#     current_user: UserRegistration = Depends(admin_or_superadmin),
 # ):
-#     user = current_user
+#     return get_bank_details(db)
 
-#     # 🔑 BYPASS VERIFICATION FOR ADMIN & SUPER ADMIN
-#     if user.role_id in (2, 3):
-#         user.is_verified = True
-
-#     return user
 
 
 
