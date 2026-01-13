@@ -26,6 +26,7 @@ from services.user_service import (
 
 
 from services.otp_service import verify_otp_service
+from services.user_service import resend_otp_service
 
 from jose import jwt, JWTError
 from utils.jwt import create_access_token, SECRET_KEY, ALGORITHM
@@ -234,6 +235,10 @@ def delete_user_api(inv_reg_id: str, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
+
+@router.post("/resend-otp")
+def resend_otp(email: str, db: Session = Depends(get_db)):
+    return resend_otp_service(db, email)
 
 
 

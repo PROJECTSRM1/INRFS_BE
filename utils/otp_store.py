@@ -77,7 +77,11 @@ def pop_user_data(email: str):
     """
     return _user_temp_store.pop(email, None)
 
-
+def is_user_registered(email: str) -> bool:
+    """
+    Check if the user has a pending registration (OTP not verified yet)
+    """
+    return email in _user_temp_store
 
 
 
