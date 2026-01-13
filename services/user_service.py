@@ -105,10 +105,13 @@ def register_user(db: Session, data: UserCreate):
 
 
 # --------------------------------------------------
-# LOGIN USER (UNCHANGED)
+# LOGIN USER (UPDATED – with is_active check)
 # --------------------------------------------------
 def login_user(db: Session, data):
 
+    # -------------------------
+    # INPUT VALIDATION
+    # -------------------------
     if not data.email and not data.inv_reg_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -121,6 +124,9 @@ def login_user(db: Session, data):
             detail="Provide only one: email or inv_reg_id",
         )
 
+    # -------------------------
+    # FETCH USER
+    # -------------------------
     if data.inv_reg_id:
         user = db.query(UserRegistration).filter(
             UserRegistration.inv_reg_id == data.inv_reg_id
@@ -136,18 +142,36 @@ def login_user(db: Session, data):
             detail="Invalid credentials",
         )
 
+    # -------------------------
+    # ACCOUNT ACTIVE CHECK (NEW)
+    # -------------------------
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive. Please contact support."
+        )
+
+    # -------------------------
+    # OTP CHECK (INVESTORS ONLY)
+    # -------------------------
     if user.role_id == 1 and not user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="OTP verification required before login",
         )
 
+    # -------------------------
+    # PASSWORD CHECK
+    # -------------------------
     if not verify_password(data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
         )
 
+    # -------------------------
+    # TOKEN GENERATION
+    # -------------------------
     subject = user.inv_reg_id if user.inv_reg_id else str(user.id)
 
     access_token = create_access_token({
@@ -170,6 +194,78 @@ def login_user(db: Session, data):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+
+
+
+
+
+
+
+
+# def login_user(db: Session, data):
+
+#     if not data.email and not data.inv_reg_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Email or inv_reg_id is required",
+#         )
+
+#     if data.email and data.inv_reg_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Provide only one: email or inv_reg_id",
+#         )
+
+#     if data.inv_reg_id:
+#         user = db.query(UserRegistration).filter(
+#             UserRegistration.inv_reg_id == data.inv_reg_id
+#         ).first()
+#     else:
+#         user = db.query(UserRegistration).filter(
+#             UserRegistration.email == data.email
+#         ).first()
+
+#     if not user:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid credentials",
+#         )
+
+#     if user.role_id == 1 and not user.is_verified:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="OTP verification required before login",
+#         )
+
+#     if not verify_password(data.password, user.password):
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid credentials",
+#         )
+
+#     subject = user.inv_reg_id if user.inv_reg_id else str(user.id)
+
+#     access_token = create_access_token({
+#         "sub": subject,
+#         "user_id": user.id,
+#         "role_id": user.role_id
+#     })
+
+#     refresh_token = create_refresh_token({
+#         "sub": subject,
+#         "user_id": user.id,
+#         "role_id": user.role_id
+#     })
+
+#     return {
+#         "message": "Login successful",
+#         "Customer-ID": user.inv_reg_id,
+#         "First_Name": user.first_name,
+#         "access_token": access_token,
+#         "refresh_token": refresh_token,
+#         "token_type": "bearer",
+#     }
 
 
 # --------------------------------------------------
@@ -217,14 +313,16 @@ def get_all_users(db: Session):
     return response
 
 
-def get_user_by_id(db: Session, user_id: int):
-    return db.query(UserRegistration).filter(
-        UserRegistration.id == user_id
-    ).first()
+def get_user_by_inv_reg_id(db: Session, inv_reg_id: str):
+    return (
+        db.query(UserRegistration)
+        .filter(UserRegistration.inv_reg_id == inv_reg_id)
+        .first()
+    )
 
 
-def update_user(db: Session, user_id: int, data):
-    user = get_user_by_id(db, user_id)
+def update_user(db: Session, inv_reg_id: str, data):
+    user = get_user_by_inv_reg_id(db, inv_reg_id)
     if not user:
         return None
 
@@ -236,11 +334,27 @@ def update_user(db: Session, user_id: int, data):
     return user
 
 
-def delete_user(db: Session, user_id: int):
-    user = get_user_by_id(db, user_id)
+
+def delete_user(db: Session, inv_reg_id: str):
+    user = get_user_by_inv_reg_id(db, inv_reg_id)
     if not user:
         return None
+
+    has_investments = (
+        db.query(InvConfig)
+        .filter(InvConfig.created_by == user.id)
+        .first()
+    )
+
+    if has_investments:
+        raise HTTPException(
+            status_code=400,
+            detail="User cannot be deleted because investments exist"
+        )
 
     db.delete(user)
     db.commit()
     return True
+
+
+

@@ -94,6 +94,22 @@ class UserDetailResponse(BaseModel):
 
 
 
+class UserDetailBasicResponse(BaseModel):
+    id: int
+    inv_reg_id: Optional[str] = None
+    first_name: str
+    last_name: str
+    email: str
+    mobile: str
+    role_id: int
+    gender_id: int
+    age: int
+    dob: datetime.date
+
+    class Config:
+        from_attributes = True  # Pydantic v2
+        # orm_mode = True        # Use this if you're on Pydantic v1
+
 
 
 
