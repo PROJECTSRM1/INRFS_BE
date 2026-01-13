@@ -7,7 +7,7 @@ from schemas.user_schema import UserCreate
 from utils.hash_password import hash_password, verify_password
 from utils.jwt import create_access_token, create_refresh_token
 from services.otp_service import send_otp_service
-from utils.otp_store import store_user_data
+from utils.otp_store import store_user_data, is_user_registered
 
 
 # --------------------------------------------------
@@ -194,7 +194,34 @@ def login_user(db: Session, data):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+def resend_otp_service(db: Session, email: str):
+    """
+    Resend OTP for a user who has a pending registration.
+    """
 
+    # -------------------------
+    # Check if user has pending registration
+    # -------------------------
+    if not is_user_registered(email):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No pending registration found for this email."
+        )
+
+    # -------------------------
+    # Optional: Rate limit check
+    # -------------------------
+    # You can implement a simple counter in memory or a database table
+    # to prevent abuse. Example:
+    # if too_many_attempts(email):
+    #     raise HTTPException(status_code=429, detail="Too many OTP requests. Try later.")
+
+    # -------------------------
+    # Resend OTP
+    # -------------------------
+    send_otp_service(db, email)
+
+    return {"message": "OTP resent successfully. Please check your email."}
 
 
 

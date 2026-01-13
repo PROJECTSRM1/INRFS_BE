@@ -36,22 +36,27 @@ def forgot_password_service(db: Session, email: str):
     FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL")
     reset_link = f"{FRONTEND_BASE_URL}/reset-password?token={token}"
 
+    # HTML email body with clickable link
+    html_body = f"""
+    <p>Dear {user.first_name},</p>
+    <p>Click the link below to reset your password:</p>
+    <p><a href="{reset_link}">Reset Password</a></p>
+    <p>This link is valid for 15 minutes.</p>
+    <p>Regards,<br>INRFS Team</p>
+    """
+
     send_email(
         to_email=email,
         subject="Reset Your Password – INRFS",
-        body=(
-            f"Dear {user.first_name},\n\n"
-            f"Click the link below to reset your password:\n\n"
-            f"{reset_link}\n\n"
-            f"This link is valid for 15 minutes.\n\n"
-            f"Regards,\nINRFS Team"
-        ),
+        body=html_body,
+        is_html=True  # send as HTML
     )
 
     # 🔥 ADD TOKEN TO RESPONSE (DEV / TEST ONLY)
     response["reset_token"] = token
 
     return response
+
 
 
 
