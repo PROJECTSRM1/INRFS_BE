@@ -70,7 +70,8 @@ def register_user(db: Session, data: UserCreate):
 
 
         return {
-            "message": "OTP sent successfully. Verify OTP to complete registration"
+            "message": "OTP sent successfully. Verify OTP to complete registration",
+            "email": data.email,
         }
 
     # --------------------------------------------------
