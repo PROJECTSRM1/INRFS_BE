@@ -19,7 +19,8 @@ load_dotenv()
 
 def forgot_password_service(db: Session, email: str):
     user = db.query(UserRegistration).filter(
-        UserRegistration.email == email
+        UserRegistration.email == email,
+        UserRegistration.is_active == True
     ).first()
 
     # Always return same message (security)
@@ -54,9 +55,6 @@ def forgot_password_service(db: Session, email: str):
 
 
 
-
-
-
 # -------------------------
 # RESET PASSWORD
 # -------------------------
@@ -64,6 +62,9 @@ def reset_password_service(db: Session, token: str, new_password: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
+        # -------------------------
+        # TOKEN TYPE CHECK
+        # -------------------------
         if payload.get("type") != "password_reset":
             raise HTTPException(status_code=400, detail="Invalid token")
 
@@ -71,18 +72,34 @@ def reset_password_service(db: Session, token: str, new_password: str):
         if not email:
             raise HTTPException(status_code=400, detail="Invalid token payload")
 
-
+        # -------------------------
+        # FETCH ACTIVE USER
+        # -------------------------
         user = db.query(UserRegistration).filter(
-            UserRegistration.email == email
+            UserRegistration.email == email,
+            UserRegistration.is_active == True
         ).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # -------------------------
+        # UPDATE PASSWORD
+        # -------------------------
         user.password = hash_password(new_password)
+
+        # -------------------------
+        # ✅ AUTO-VERIFY INVESTORS ONLY
+        # -------------------------
+        if user.role_id == 1:
+            user.is_verified = True
+
         db.commit()
 
         return {"message": "Password reset successful"}
 
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+
+
