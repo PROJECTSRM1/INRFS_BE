@@ -191,6 +191,7 @@ def login_user(db: Session, data):
         "message": "Login successful",
         "Customer-ID": user.inv_reg_id,
         "First_Name": user.first_name,
+        "role_id": user.role_id,     # ✅ ADDED
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",

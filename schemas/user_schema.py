@@ -33,6 +33,7 @@ class LoginResponse(BaseModel):
     message: str
     inv_reg_id: Optional[str] = Field(default=None, alias="Customer-ID")
     first_name: str = Field(alias="First_Name")
+    role_id: int                    # ✅ ADDED    
     access_token: str
     refresh_token: str
     token_type: str
